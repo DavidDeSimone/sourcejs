@@ -2,6 +2,9 @@
 #define __HG_SOURCEJS_H
 
 #include <string>
+#include <node.h>
+#include <node_object_wrap.h>
+
 
 #define USING_SOURCEJS_NS using namespace hg;
 #define SOURCEJS_NS_BEGIN namespace hg {
@@ -10,7 +13,7 @@
 
 SOURCEJS_NS_BEGIN
 
-class hgRepo
+class hgRepo : public node::ObjectWrap
 {
  public:
   hgRepo(std::string fullPath);
@@ -21,6 +24,8 @@ class hgRepo
 
   std::string status(const std::string& flags) const;
 
+
+  static void hgRepoConstructor(const v8::FunctionCallbackInfo<v8::Value>& args);
  private:
   std::string fullPath;
 };

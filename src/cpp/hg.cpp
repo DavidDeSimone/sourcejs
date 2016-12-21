@@ -6,20 +6,17 @@
 namespace hg {
 
   using namespace v8;
-
-  v8::Persistent<v8::FunctionTemplate> hgRepoTemplate;
+  
+  v8::Persistent<v8::Function> hgRepoTemplate;
   void hgStatus(const FunctionCallbackInfo<Value>& args)
   {
     Isolate* isolate = args.GetIsolate();
     HandleScope scope(isolate);
-    Local<Object> self = args.This();
-    Local<External> wrapper = Local<External>::Cast(self->GetInternalField(0));
-    void* valuePtr = wrapper->Value();
-    auto ptr = static_cast<hgRepo*>(valuePtr);
+    auto ptr = node::ObjectWrap::Unwrap<hgRepo>(args.Holder());
     args.GetReturnValue().Set(String::NewFromUtf8(isolate, ptr->status("").c_str()));
   }
   
-  void hgRepoConstructor(const FunctionCallbackInfo<Value>& args)
+  void hgRepo::hgRepoConstructor(const FunctionCallbackInfo<Value>& args)
   {
     Isolate* isolate = args.GetIsolate();
     v8::HandleScope scope(isolate);
@@ -28,42 +25,22 @@ namespace hg {
       std::cout << " DUN FUCKED UP SON " << std::endl;
     // TODO get string from args
     auto repo = new (std::nothrow) hgRepo("foo");
-    auto obj = v8::Local<Object>::New(isolate, args.This());
-    obj->SetInternalField(0, External::New(isolate, repo));
+    repo->Wrap(args.This());
     args.GetReturnValue().Set(args.This());
   }
-
-  /*
-v8::Local<v8::FunctionTemplate> t = v8::FunctionTemplate::New();
-t->Set("func_property", v8::Number::New(1));
-v8::Local<v8::Template> proto_t = t->PrototypeTemplate();
-proto_t->Set("proto_method", v8::FunctionTemplate::New(InvokeCallback));
-proto_t->Set("proto_const", v8::Number::New(2));
-v8::Local<v8::ObjectTemplate> instance_t = t->InstanceTemplate();
-instance_t->SetAccessor("instance_accessor", InstanceAccessorCallback);
-instance_t->SetNamedPropertyHandler(PropertyHandlerCallback, ...);
-instance_t->Set("instance_property", Number::New(3));
-v8::Local<v8::Function> function = t->GetFunction();
-v8::Local<v8::Object> instance = function->NewInstance();
-   */
   
-  void Method(const FunctionCallbackInfo<Value>& args) {
-    auto isolate = args.GetIsolate();
-    args.GetReturnValue().Set(String::NewFromUtf8(isolate, "world"));
-  }
-
-  void init(Local<Object> exports) {
-    NODE_SET_METHOD(exports, "hello", Method);
-
+  void init(Local<Object> exports, Local<Object> module) {
     Isolate* isolate = v8::Isolate::GetCurrent();
     v8::HandleScope scope(isolate);
-    v8::Local<v8::FunctionTemplate> localHgRepoTemplate = v8::FunctionTemplate::New(isolate, hgRepoConstructor);
+    v8::Local<v8::FunctionTemplate> localHgRepoTemplate = v8::FunctionTemplate::New(isolate, hgRepo::hgRepoConstructor);
+    localHgRepoTemplate->SetClassName(String::NewFromUtf8(isolate, "hgRepo"));
     v8::Local<v8::ObjectTemplate> inst = localHgRepoTemplate->InstanceTemplate();
     inst->SetInternalFieldCount(1);
     
-    //    NODE_SET_PROTOTYPE_METHOD(localHgRepoTemplate, "status", hgStatus); 
+    NODE_SET_PROTOTYPE_METHOD(localHgRepoTemplate, "status", hgStatus); 
+    hgRepoTemplate.Reset(isolate, localHgRepoTemplate->GetFunction());
 
-    hgRepoTemplate.Reset(isolate, localHgRepoTemplate);
+    exports->Set(String::NewFromUtf8(isolate, "repo"), localHgRepoTemplate->GetFunction());
   }
 
   NODE_MODULE(hg, init)
