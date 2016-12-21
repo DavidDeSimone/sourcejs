@@ -1,5 +1,13 @@
-//const hg = require('./src/cpp/build/Release/hg');
+declare const GitGraph;
 
+// var app = require('electron').remote;
+// var dialog = app.dialog;
+// dialog.showOpenDialog(function (fileName) {
+// });
+const cwd: string = process.cwd();
+const hg = require(cwd + '/src/cpp/build/Release/hg');
+
+require(cwd + '/gitgraph.js/build/gitgraph.min.js');
 
 var gitgraph = new GitGraph({
     template: "metro",
@@ -18,8 +26,5 @@ var hotfix = gitgraph.branch({
     name: "hotfix",
     column: 2             // which column index it should be displayed in
 });
-
-
-
 
 //module.exports = hg;
