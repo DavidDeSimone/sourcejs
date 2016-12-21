@@ -1,5 +1,7 @@
 #include <node.h>
 
+#include "hg.h"
+
 namespace hg {
 
   using v8::FunctionCallbackInfo;
