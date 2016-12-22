@@ -5,25 +5,35 @@ declare const Promise;
 // dialog.showOpenDialog(function (fileName) {
 // });
 const cwd: string = process.cwd();
-const hg = require(cwd + '/src/cpp/build/Release/hg');
+const exec = require('child_process').exec;
 
 class HgRepo {
     private repo;
 
     constructor(public fullPath: string) {
-        this.repo = new hg.repo();
+
+    }
+    private _exec(command: string): any {
+        return new Promise((resolve, reject) => {
+            exec(command, (error, stdout, stderr) => {
+                if (error) {
+                    reject(error, stderr);
+                } else {
+                    resolve(stdout);
+                }
+            })
+        });
+
     }
 
     public status(): any {
-        return this.repo.status('foo', function (result) {
-            console.log(arguments);
-        });
-        //        return new Promise((resolve) => this.repo.status("status", resolve));
+        return this._exec('git status');
     }
 }
 
 const myRepo: HgRepo = new HgRepo(cwd);
-myRepo.status();
+myRepo.status()
+    .then(result => console.log(result));
 
 // require(cwd + '/gitgraph.js/build/gitgraph.min.js');
 
