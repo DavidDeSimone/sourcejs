@@ -7,23 +7,21 @@ declare const GitGraph;
 const cwd: string = process.cwd();
 const hg = require(cwd + '/src/cpp/build/Release/hg');
 
-class hgRepo {
+class HgRepo {
     private repo;
 
     constructor(public fullPath: string) {
-
+        this.repo = new hg.repo();
     }
 
     public status(): string {
-        console.log(this.fullPath);
-        return this.fullPath;
+        console.log(this.repo.status());
+        return this.repo.status();
     }
 }
 
-
-
-
-
+const myRepo: HgRepo = new HgRepo(cwd);
+myRepo.status();
 
 // require(cwd + '/gitgraph.js/build/gitgraph.min.js');
 
