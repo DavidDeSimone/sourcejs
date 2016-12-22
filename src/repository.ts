@@ -14,6 +14,9 @@ require(cwd + '/gitgraph.js/build/gitgraph.min.js');
 interface RepositoryImplementation {
     Log(args: string): string;
     ParseLog(result: string): Array<Object>;
+
+    Status(args: string): string;
+    ParseStatus(result: string): Array<Object>;
 }
 
 class Repository<T extends RepositoryImplementation> {
@@ -35,37 +38,12 @@ class Repository<T extends RepositoryImplementation> {
         });
     }
 
-    public status(): any {
-        return this._exec('git status');
+    public Status(args: string): PromiseLike<Array<Object>> {
+        return this._exec(this.strategy.Status(args))
+            .then(this.strategy.ParseStatus.bind(this.strategy));
     }
-    public log(args: string): any {
+    public Log(args: string): PromiseLike<Array<Object>> {
         return this._exec(this.strategy.Log(args))
-            .then(this.strategy.ParseLog.bind(this));
+            .then(this.strategy.ParseLog.bind(this.strategy));
     }
 }
-
-
-
-var foo = new Repository<Hg>(Hg, cwd);
-foo.log('-3')
-    .then(console.log.bind(console));
-
-var gitgraph = new GitGraph({
-    template: "metro",
-    orientation: "horizontal",
-    mode: "compact"
-});
-
-// var master = gitgraph.branch("master");
-// gitgraph.commit().commit().commit();         // 3 commits upon HEAD
-// var develop = gitgraph.branch("develop");    // New branch from HEAD
-// var myfeature = develop.branch("myfeature"); // New branch from develop
-
-// // Well, if you need to go deeper…
-// var hotfix = gitgraph.branch({
-//     parentBranch: develop,
-//     name: "hotfix",
-//     column: 2             // which column index it should be displayed in
-// });
-
-//module.exports = hg;
