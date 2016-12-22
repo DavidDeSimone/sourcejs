@@ -1,18 +1,17 @@
-declare const module;
+export module Git {
+    export class Git {
+        public Log(args: string): string {
+            return "git log " + args;
+        }
 
-class Git {
-    public Log(args: string): string {
-        return "git log " + args;
+        public ParseLog(result: string): Array<Object> {
+            return [
+                {
+                    "foo": "bar"
+                }
+            ]
+        }
     }
 
-    public ParseLog(result: string): Array<Object> {
-        return [
-            {
-                "foo": "bar"
-            }
-        ]
-    }
+
 }
-
-
-module.exports = Git;

@@ -1,6 +1,13 @@
-const React = require('react');
+/* const React = require('react');
+ * 
+ * 
+ * React.DOM.render(
+ *     <h1> Hello React!</h1>
+ * );*/
 
 
-React.DOM.render(
-    <h1> Hello React!</h1>
-);
+import { Hg } from './hg.js';
+import { Source } from './repository.js';
+
+let Repo = new Source.Repository<Hg>(Hg, 'path');
+Repo.Log('').then(console.log.bind(console));

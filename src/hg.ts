@@ -1,6 +1,5 @@
-declare const module;
 const _ = require('lodash');
-class Hg {
+export class Hg {
     public Log(args: string): string {
         return "hg log " + args;
     }
@@ -22,10 +21,16 @@ class Hg {
             returnValue.push(entryObject);
         });
 
-
         return returnValue;
     }
+
+    public Status(args: string): string {
+        return 'hg st ' + args;
+    }
+
+    public ParseStatus(result: string): Array<Object> {
+        return [
+            { foo: 'bar' }
+        ];
+    }
 }
-
-
-module.exports = Hg;
