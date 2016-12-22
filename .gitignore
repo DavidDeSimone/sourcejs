@@ -5,3 +5,6 @@ build/
 *.js.map
 *.log
 .hg/
+.hgignore
+.hgsubstate
+.hgsub
