@@ -5,11 +5,13 @@ export module Source {
     const _ = require('lodash');
 
     interface RepositoryImplementation {
-        Log(args: string): string;
+        Log(args?: string): string;
         ParseLog(result: string): Array<Object>;
 
-        Status(args: string): string;
+        Status(args?: string): string;
         ParseStatus(result: string): Array<Object>;
+
+        Commit(message: string, flags?: string);
     }
 
     export class Repository<T extends RepositoryImplementation> {
@@ -31,13 +33,17 @@ export module Source {
             });
         }
 
-        public Status(args: string): PromiseLike<Array<Object>> {
+        public Status(args?: string): PromiseLike<Array<Object>> {
             return this._exec(this.strategy.Status(args))
                 .then(this.strategy.ParseStatus.bind(this.strategy));
         }
-        public Log(args: string): PromiseLike<Array<Object>> {
+        public Log(args?: string): PromiseLike<Array<Object>> {
             return this._exec(this.strategy.Log(args))
                 .then(this.strategy.ParseLog.bind(this.strategy));
+        }
+
+        public Commit(message: string, flags?: string): PromiseLike<string> {
+            return this._exec(this.strategy.Commit(message, flags));
         }
     }
 }

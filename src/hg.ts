@@ -1,7 +1,8 @@
 const _ = require('lodash');
 export class Hg {
-    public Log(args: string): string {
-        return "hg log " + args;
+    public Log(args?: string): string {
+        args = args || '';
+        return `hg log ${args}`;
     }
 
     public ParseLog(result: string): Array<Object> {
@@ -24,13 +25,29 @@ export class Hg {
         return returnValue;
     }
 
-    public Status(args: string): string {
-        return 'hg st ' + args;
+    public Status(args?: string): string {
+        args = args || '';
+        return `hg st ${args}`;
     }
 
     public ParseStatus(result: string): Array<Object> {
-        return [
-            { foo: 'bar' }
-        ];
+        const lines: Array<string> = result.split('\n');
+        const returnValue = [];
+
+        _(lines).forEach(line => {
+            if (!line) return;
+            const entry = {};
+            const parts = line.split(' ');
+            entry['changeType'] = parts[0];
+            entry['fileName'] = parts[1];
+            returnValue.push(entry);
+        });
+
+        return returnValue;
+    }
+
+    public Commit(message: string, flags?: string) {
+        flags = flags || '';
+        return `hg commit ${flags} -m ${message}`;
     }
 }
