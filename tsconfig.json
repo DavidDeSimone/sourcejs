@@ -4,7 +4,8 @@
 	"module": "system",
 	"outDir": "build/",
 	"preserveConstEnums": true,
-	"sourceMap": true
+	"sourceMap": true,
+	"jsx": "react"
     },
     "include": [
 	"src/**/*",
