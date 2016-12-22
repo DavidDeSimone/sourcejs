@@ -48,6 +48,6 @@ export class Hg {
 
     public Commit(message: string, flags?: string) {
         flags = flags || '';
-        return `hg commit ${flags} -m ${message}`;
+        return `hg commit ${flags} -m "${message}"`;
     }
 }
