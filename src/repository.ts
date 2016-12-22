@@ -6,13 +6,23 @@ declare const Promise;
 // });
 const cwd: string = process.cwd();
 const exec = require('child_process').exec;
+const _ = require('lodash');
+const Git = require('./git.js');
+const Hg = require('./hg.js');
+require(cwd + '/gitgraph.js/build/gitgraph.min.js');
 
-class HgRepo {
+interface RepositoryImplementation {
+    Log(args: string): string;
+    ParseLog(result: string): Array<Object>;
+}
+
+class Repository<T extends RepositoryImplementation> {
     private repo;
-
-    constructor(public fullPath: string) {
-
+    private strategy: T;
+    constructor(c: { new (): T; }, public fullPath: string) {
+        this.strategy = new c();
     }
+
     private _exec(command: string): any {
         return new Promise((resolve, reject) => {
             exec(command, (error, stdout, stderr) => {
@@ -23,25 +33,28 @@ class HgRepo {
                 }
             })
         });
-
     }
 
     public status(): any {
         return this._exec('git status');
     }
+    public log(args: string): any {
+        return this._exec(this.strategy.Log(args))
+            .then(this.strategy.ParseLog.bind(this));
+    }
 }
 
-const myRepo: HgRepo = new HgRepo(cwd);
-myRepo.status()
-    .then(result => console.log(result));
 
-// require(cwd + '/gitgraph.js/build/gitgraph.min.js');
 
-// var gitgraph = new GitGraph({
-//     template: "metro",
-//     orientation: "horizontal",
-//     mode: "compact"
-// });
+var foo = new Repository<Hg>(Hg, cwd);
+foo.log('-3')
+    .then(console.log.bind(console));
+
+var gitgraph = new GitGraph({
+    template: "metro",
+    orientation: "horizontal",
+    mode: "compact"
+});
 
 // var master = gitgraph.branch("master");
 // gitgraph.commit().commit().commit();         // 3 commits upon HEAD
