@@ -20,14 +20,23 @@ class hgRepo : public node::ObjectWrap
   ~hgRepo() = default;
   hgRepo(const hgRepo&) = delete;
   hgRepo& operator=(const hgRepo&) = delete;
-
-
-  std::string status(const std::string& flags) const;
+  void status(const std::string& flags, std::function<void(std::string)> callback);
 
 
   static void hgRepoConstructor(const v8::FunctionCallbackInfo<v8::Value>& args);
+
  private:
+
+  int _execute(std::string action, std::function<void(std::string)> callback);
+  
   std::string fullPath;
+};
+
+struct ExecuteAction
+{
+  std::function<void(std::string)> callback;
+  std::string action;
+  std::string result;
 };
 
 SOURCEJS_NS_END

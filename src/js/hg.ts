@@ -1,5 +1,5 @@
 declare const GitGraph;
-
+declare const Promise;
 // var app = require('electron').remote;
 // var dialog = app.dialog;
 // dialog.showOpenDialog(function (fileName) {
@@ -14,9 +14,11 @@ class HgRepo {
         this.repo = new hg.repo();
     }
 
-    public status(): string {
-        console.log(this.repo.status());
-        return this.repo.status();
+    public status(): any {
+        return this.repo.status('foo', function (result) {
+            console.log(arguments);
+        });
+        //        return new Promise((resolve) => this.repo.status("status", resolve));
     }
 }
 
