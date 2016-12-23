@@ -12,6 +12,8 @@ export module Source {
         ParseStatus(result: string): Array<Object>;
 
         Commit(message: string, flags?: string);
+
+        Diff(flags?: string);
     }
 
     export class Repository<T extends RepositoryImplementation> {
@@ -44,6 +46,10 @@ export module Source {
 
         public Commit(message: string, flags?: string): PromiseLike<string> {
             return this._exec(this.strategy.Commit(message, flags));
+        }
+
+        public Diff(flags?: string): PromiseLike<string> {
+            return this._exec(this.strategy.Diff(flags));
         }
     }
 }

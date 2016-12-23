@@ -50,4 +50,9 @@ export class Hg {
         flags = flags || '';
         return `hg commit ${flags} -m "${message}"`;
     }
+
+    public Diff(flags?: string): string {
+        flags = flags || '';
+        return `hg diff --git ${flags}`;
+    }
 }
