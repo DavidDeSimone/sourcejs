@@ -44,6 +44,7 @@ class DiffComponent extends React.Component {
     }
 
     render() {
+        // @TODO need to clear out old diff window post commit
         if (this.state.diff) {
             const diffView = new Diff2HtmlUI({ diff: this.state.diff });
             diffView.draw('#diffView', { inputFormat: 'diff', showFiles: true, matching: 'lines' });
@@ -102,8 +103,10 @@ class PendingChangeComponent extends React.Component {
             .map(entry =>
                 <li key={entry.fileName}>{entry.changeType}: {entry.fileName}</li>
             ).value();
+        // @TODO move out the commit message stuff into its own component
         return (
             <div>
+                <b>File Status:</b>
                 <ul>{listItems}</ul>
                 <form onSubmit={this.handleSubmit.bind(this)}>
                     <label>
@@ -121,8 +124,8 @@ class PendingChangeComponent extends React.Component {
 class App extends React.Component {
     render() {
         return <div>
-            <PendingChangeComponent />
             <DiffComponent />
+            <PendingChangeComponent />
         </div>
     }
 }
