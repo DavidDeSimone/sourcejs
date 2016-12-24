@@ -127,15 +127,40 @@ class TreeComponent extends React.Component {
     constructor(props) {
         super(props);
         this.state = { status: '' };
-        this.graph = new GitGraph({
-            template: "metro",
-            orientation: "horizontal",
-            mode: "compact"
-        });
-        this.tick();
+        setTimeout(this.tick, 400);
     }
 
     tick() {
+        var myTemplateConfig = {
+            colors: ["#F00", "#0F0", "#00F"], // branches colors, 1 per column
+            branch: {
+                lineWidth: 10,
+                spacingX: 25,
+                showLabel: true,                  // display branch names on graph
+            },
+            commit: {
+                spacingY: -80,
+                dot: {
+                    size: 15
+                },
+                message: {
+                    displayAuthor: true,
+                    displayBranch: false,
+                    displayHash: false,
+                    font: "normal 12pt Arial"
+                },
+                tooltipHTMLFormatter: function (commit) {
+                    return "" + commit.sha1 + "" + ": " + commit.message;
+                }
+            }
+        };
+        var myTemplate = new GitGraph.Template(myTemplateConfig);
+
+        this.graph = this.graph || new GitGraph({
+            template: myTemplate,
+        });
+        // @TODO make this state based, have tick update state, and graph update
+        // the commits, create the graph in render
         Repo.Branches().then(branches => {
             _(branches).forEach(branch => {
                 let graphBranch = this.graph.branch(branch);
@@ -153,7 +178,7 @@ class TreeComponent extends React.Component {
     }
 
     render() {
-        return <div>Hello</div>
+        return <canvas id="gitGraph"></canvas>
     }
 }
 
