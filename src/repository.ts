@@ -14,6 +14,9 @@ export module Source {
         Commit(message: string, flags?: string);
 
         Diff(flags?: string);
+
+        Branches(flags?: string): string;
+        ParseBranches(result: string): Array<string>;
     }
 
     export class Repository<T extends RepositoryImplementation> {
@@ -50,6 +53,11 @@ export module Source {
 
         public Diff(flags?: string): PromiseLike<string> {
             return this._exec(this.strategy.Diff(flags));
+        }
+
+        public Branches(flags?: string): PromiseLike<Array<string>> {
+            return this._exec(this.strategy.Branches(flags))
+                .then(this.strategy.ParseBranches.bind(this.strategy));
         }
     }
 }

@@ -55,4 +55,20 @@ export class Hg {
         flags = flags || '';
         return `hg diff --git ${flags}`;
     }
+
+    public Branches(flags?: string): string {
+        flags = flags || '';
+        return `hg branches ${flags}`;
+    }
+
+    public ParseBranches(result: string): Array<string> {
+        const returnValue: Array<string> = [];
+        const lines = result.split('\n');
+        _(lines).forEach(line => {
+            if (!line) return;
+            const parts = line.split(' ');
+            returnValue.push(parts[0]);
+        });
+        return returnValue;
+    }
 }

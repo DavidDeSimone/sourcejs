@@ -12,6 +12,7 @@ let dif2html = require("diff2html").Diff2Html;
 // @TODO find a better way to do this bullshit
 global.$ = require('jquery');
 require('./node_modules/diff2html/dist/diff2html-ui.js');
+require('./gitgraph.js/build/gitgraph.min.js');
 
 // Initalize Repo
 let Repo = new Source.Repository<Hg>(Hg, process.cwd());
@@ -120,12 +121,49 @@ class PendingChangeComponent extends React.Component {
     }
 }
 
+class TreeComponent extends React.Component {
+    private state: Object;
+    private graph: Object;
+    constructor(props) {
+        super(props);
+        this.state = { status: '' };
+        this.graph = new GitGraph({
+            template: "metro",
+            orientation: "horizontal",
+            mode: "compact"
+        });
+        this.tick();
+    }
+
+    tick() {
+        Repo.Branches().then(branches => {
+            _(branches).forEach(branch => {
+                let graphBranch = this.graph.branch(branch);
+                Repo.Log(`-b ${branch}`).then(commits => {
+                    _(commits).forEach(commit => {
+                        graphBranch.commit({
+                            message: commit.summary,
+                            author: commit.user,
+                            sha1: commit.hash
+                        });
+                    });
+                });
+            });
+        });
+    }
+
+    render() {
+        return <div>Hello</div>
+    }
+}
+
 
 class App extends React.Component {
     render() {
         return <div>
             <DiffComponent />
             <PendingChangeComponent />
+            <TreeComponent />
         </div>
     }
 }
