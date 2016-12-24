@@ -25,7 +25,7 @@ export module Source {
 
         private _exec(command: string): any {
             return new Promise((resolve, reject) => {
-                exec(command, (error, stdout, stderr) => {
+                exec(command, { cwd: this.fullPath }, (error, stdout, stderr) => {
                     if (error) {
                         reject(error, stderr);
                     } else {

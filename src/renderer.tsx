@@ -14,7 +14,7 @@ global.$ = require('jquery');
 require('./node_modules/diff2html/dist/diff2html-ui.js');
 
 // Initalize Repo
-let Repo = new Source.Repository<Hg>(Hg, 'path');
+let Repo = new Source.Repository<Hg>(Hg, process.cwd());
 
 class DiffComponent extends React.Component {
     private state: Object;
