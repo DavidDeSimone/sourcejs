@@ -1,19 +1,16 @@
-A version control viewer for mecurial/git written for electron. Written in typescript and c++.
+A version control viewer for mecurial/git written for electron. Written in typescript.
 
 
 Building:
 
-To build, you will need to download electron via
+To build, download deps via
 
-npm install electron
-
-install node-gyp via
-npm install node-gyp
-
-build the native node module
-
-cd src/cpp/ && ./build.sh
+npm install
 
 and build typescript via
 
 npm install typescript && tsc in the root dir
+
+Running:
+
+To start, run npm start in the root dir
