@@ -29,11 +29,9 @@ class DiffComponent extends React.Component {
 
     tick() {
         this.repo.Diff().then(result => {
-            if (result) {
-                this.setState({
-                    diff: result
-                });
-            }
+            this.setState({
+                diff: result
+            });
         });
     }
 
@@ -47,11 +45,13 @@ class DiffComponent extends React.Component {
     }
 
     render() {
-        // @TODO need to clear out old diff window post commit
         if (this.state.diff) {
             const diffView = new Diff2HtmlUI({ diff: this.state.diff });
             diffView.draw('#diffView', { inputFormat: 'diff', showFiles: true, matching: 'lines' });
             diffView.highlightCode('#line-by-line');
+        } else {
+            var element = document.getElementById('diffView');
+            if (element) element.innerHTML = '';
         }
         return (
             <div id="diffView"></div>
