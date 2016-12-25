@@ -25,7 +25,6 @@ class DiffComponent extends React.Component {
         super(props);
         this.repo = props.repo;
         this.state = { diff: '' };
-        this.tick();
     }
 
     tick() {
@@ -39,6 +38,7 @@ class DiffComponent extends React.Component {
     }
 
     componentDidMount() {
+        this.tick();
         this.timerId = setInterval(() => this.tick(), 1000);
     }
 
@@ -70,10 +70,10 @@ class PendingChangeComponent extends React.Component {
         super(props);
         this.repo = props.repo;
         this.state = { status: null, commitMsg: '' };
-        this.tick();
     }
 
     componentDidMount() {
+        this.tick();
         this.timerId = setInterval(() => this.tick(), 1000);
     }
 
@@ -129,62 +129,92 @@ class TreeComponent extends React.Component {
     private state: Object;
     private graph: Object;
     private repo: Source.Repository<Hg>;
+    private graphTemplate: Object;
+    private timerId: number;
+    private renderInitalized: boolean;
+
     constructor(props) {
         super(props);
         this.repo = props.repo;
-        this.state = { status: '' };
-        setTimeout(this.tick.bind(this), 400);
+        this.state = {};
+    }
+
+    componentDidMount() {
+        this.timerId = setInterval(() => this.tick(), 1000);
+    }
+
+    componentWillUnmount() {
+        clearInterval(this.timerId);
     }
 
     tick() {
-        var myTemplateConfig = {
-            colors: ["#F00", "#0F0", "#00F"], // branches colors, 1 per column
-            branch: {
-                lineWidth: 10,
-                spacingX: 25,
-                showLabel: true,                  // display branch names on graph
-            },
-            commit: {
-                spacingY: -80,
-                dot: {
-                    size: 15
-                },
-                message: {
-                    displayAuthor: true,
-                    displayBranch: false,
-                    displayHash: false,
-                    font: "normal 12pt Arial"
-                },
-                tooltipHTMLFormatter: function (commit) {
-                    return "" + commit.sha1 + "" + ": " + commit.message;
-                }
-            }
-        };
-        var myTemplate = new GitGraph.Template(myTemplateConfig);
-
-        this.graph = this.graph || new GitGraph({
-            template: myTemplate,
-        });
-        // @TODO make this state based, have tick update state, and graph update
-        // the commits, create the graph in render
         this.repo.Branches().then(branches => {
             _(branches).forEach(branch => {
-                let graphBranch = this.graph.branch(branch);
                 this.repo.Log(`-b ${branch}`).then(commits => {
+                    const branchStateValue = {
+                        name: branch,
+                        parent: null, // @TODO fill this out
+                        commits: []
+                    };
                     _(commits).forEach(commit => {
-                        graphBranch.commit({
+                        branchStateValue.commits.push({
                             message: commit.summary,
                             author: commit.user,
                             sha1: commit.hash
                         });
                     });
+                    if ((!this.state[branch]) || (this.state[branch].commits[0].sha1
+                        !== branchStateValue.commits[0].sha1)) {
+                        const newState = {};
+                        newState[branch] = branchStateValue;
+                        this.setState(newState);
+                    }
                 });
             });
         });
     }
 
     render() {
-        return <canvas id="gitGraph"></canvas>
+        if (!this.graphTemplate) {
+            var myTemplateConfig = {
+                colors: ["#F00", "#0F0", "#00F"], // branches colors, 1 per column
+                branch: {
+                    lineWidth: 10,
+                    spacingX: 25,
+                    showLabel: true,                  // display branch names on graph
+                },
+                commit: {
+                    spacingY: -80,
+                    dot: {
+                        size: 15
+                    },
+                    message: {
+                        displayAuthor: true,
+                        displayBranch: false,
+                        displayHash: false,
+                        font: "normal 12pt Arial"
+                    },
+                    tooltipHTMLFormatter: function (commit) {
+                        return "" + commit.sha1 + "" + ": " + commit.message;
+                    }
+                }
+            };
+            this.graphTemplate = new GitGraph.Template(myTemplateConfig);
+        }
+
+        if (this.renderInitalized) {
+            this.graph = new GitGraph({
+                template: this.graphTemplate,
+            });
+
+            _(this.state).forOwn((branch, branchName) => {
+                let graphBranch = this.graph.branch(branchName);
+                _(branch.commits).forEach(graphBranch.commit.bind(graphBranch));
+            });
+        }
+
+        this.renderInitalized = true;;
+        return <canvas id="gitGraph"></canvas>;
     }
 }
 
