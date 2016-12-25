@@ -30,7 +30,7 @@ export module Source {
             return new Promise((resolve, reject) => {
                 exec(command, { cwd: this.fullPath }, (error, stdout, stderr) => {
                     if (error) {
-                        reject(error, stderr);
+                        reject({ error, stdout, stderr });
                     } else {
                         resolve(stdout);
                     }

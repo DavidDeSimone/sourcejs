@@ -97,10 +97,15 @@ class PendingChangeComponent extends React.Component {
 
     handleSubmit(event: Event) {
         event.preventDefault();
-        this.repo.Commit(this.state.commitMsg);
-        this.setState({
-            commitMsg: ''
-        });
+        this.repo.Commit(this.state.commitMsg)
+            .then(() => {
+                this.setState({
+                    commitMsg: ''
+                });
+            })
+            .catch((error) => {
+                alert(`There has been a problem while attempting to commit, ${error.stdout}`);
+            });
     }
 
     render() {
@@ -125,6 +130,31 @@ class PendingChangeComponent extends React.Component {
     }
 }
 
+
+const myTemplateConfig = {
+    colors: ["#F00", "#0F0", "#00F"], // branches colors, 1 per column
+    branch: {
+        lineWidth: 10,
+        spacingX: 25,
+        showLabel: true,                  // display branch names on graph
+    },
+    commit: {
+        spacingY: -80,
+        dot: {
+            size: 15
+        },
+        message: {
+            displayAuthor: true,
+            displayBranch: false,
+            displayHash: false,
+            font: "normal 12pt Arial"
+        },
+        tooltipHTMLFormatter: function (commit) {
+            return "" + commit.sha1 + "" + ": " + commit.message;
+        }
+    }
+};
+
 class TreeComponent extends React.Component {
     private state: Object;
     private graph: Object;
@@ -137,6 +167,7 @@ class TreeComponent extends React.Component {
         super(props);
         this.repo = props.repo;
         this.state = {};
+        this.graphTemplate = new GitGraph.Template(myTemplateConfig);
     }
 
     componentDidMount() {
@@ -175,33 +206,6 @@ class TreeComponent extends React.Component {
     }
 
     render() {
-        if (!this.graphTemplate) {
-            var myTemplateConfig = {
-                colors: ["#F00", "#0F0", "#00F"], // branches colors, 1 per column
-                branch: {
-                    lineWidth: 10,
-                    spacingX: 25,
-                    showLabel: true,                  // display branch names on graph
-                },
-                commit: {
-                    spacingY: -80,
-                    dot: {
-                        size: 15
-                    },
-                    message: {
-                        displayAuthor: true,
-                        displayBranch: false,
-                        displayHash: false,
-                        font: "normal 12pt Arial"
-                    },
-                    tooltipHTMLFormatter: function (commit) {
-                        return "" + commit.sha1 + "" + ": " + commit.message;
-                    }
-                }
-            };
-            this.graphTemplate = new GitGraph.Template(myTemplateConfig);
-        }
-
         if (this.renderInitalized) {
             this.graph = new GitGraph({
                 template: this.graphTemplate,
