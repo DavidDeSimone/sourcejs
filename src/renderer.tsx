@@ -20,14 +20,16 @@ let Repo = new Source.Repository<Hg>(Hg, process.cwd());
 class DiffComponent extends React.Component {
     private state: Object;
     private timerId;
+    private repo: Source.Repository<Hg>;
     constructor(props) {
         super(props);
+        this.repo = props.repo;
         this.state = { diff: '' };
         this.tick();
     }
 
     tick() {
-        Repo.Diff().then(result => {
+        this.repo.Diff().then(result => {
             if (result) {
                 this.setState({
                     diff: result
@@ -63,8 +65,10 @@ class DiffComponent extends React.Component {
 class PendingChangeComponent extends React.Component {
     private state;
     private timerId;
+    private repo: Source.Repository<Hg>;
     constructor(props) {
         super(props);
+        this.repo = props.repo;
         this.state = { status: null, commitMsg: '' };
         this.tick();
     }
@@ -78,7 +82,7 @@ class PendingChangeComponent extends React.Component {
     }
 
     tick() {
-        Repo.Status().then(result => {
+        this.repo.Status().then(result => {
             this.setState({
                 status: result
             });
@@ -93,7 +97,7 @@ class PendingChangeComponent extends React.Component {
 
     handleSubmit(event: Event) {
         event.preventDefault();
-        Repo.Commit(this.state.commitMsg);
+        this.repo.Commit(this.state.commitMsg);
         this.setState({
             commitMsg: ''
         });
@@ -124,10 +128,12 @@ class PendingChangeComponent extends React.Component {
 class TreeComponent extends React.Component {
     private state: Object;
     private graph: Object;
+    private repo: Source.Repository<Hg>;
     constructor(props) {
         super(props);
+        this.repo = props.repo;
         this.state = { status: '' };
-        setTimeout(this.tick, 400);
+        setTimeout(this.tick.bind(this), 400);
     }
 
     tick() {
@@ -161,10 +167,10 @@ class TreeComponent extends React.Component {
         });
         // @TODO make this state based, have tick update state, and graph update
         // the commits, create the graph in render
-        Repo.Branches().then(branches => {
+        this.repo.Branches().then(branches => {
             _(branches).forEach(branch => {
                 let graphBranch = this.graph.branch(branch);
-                Repo.Log(`-b ${branch}`).then(commits => {
+                this.repo.Log(`-b ${branch}`).then(commits => {
                     _(commits).forEach(commit => {
                         graphBranch.commit({
                             message: commit.summary,
@@ -186,9 +192,9 @@ class TreeComponent extends React.Component {
 class App extends React.Component {
     render() {
         return <div>
-            <DiffComponent />
-            <PendingChangeComponent />
-            <TreeComponent />
+            <DiffComponent repo={Repo} />
+            <PendingChangeComponent repo={Repo} />
+            <TreeComponent repo={Repo} />
         </div>
     }
 }
