@@ -59,22 +59,24 @@ export module Tree {
             this.repo.Branches().then(branches => {
                 _(branches).forEach(branch => {
                     this.repo.Log(`-b ${branch}`).then(commits => {
-                        const branchStateValue = {
+                        const branchState = {
                             name: branch,
                             parent: null, // @TODO fill this out
                             commits: []
                         };
-                        _(commits).forEach(commit => {
-                            branchStateValue.commits.push({
-                                message: commit.summary,
-                                author: commit.user,
-                                sha1: commit.hash
-                            });
-                        });
+                        _(commits)
+                            .map(commit => {
+                                return {
+                                    message: commit.summary,
+                                    author: commit.user,
+                                    sha1: commit.hash
+                                }
+                            })
+                            .forEach(commit => branchState.commits.push(commit));
                         if ((!this.state[branch]) || (this.state[branch].commits[0].sha1
-                            !== branchStateValue.commits[0].sha1)) {
+                            !== branchState.commits[0].sha1)) {
                             const newState = {};
-                            newState[branch] = branchStateValue;
+                            newState[branch] = branchState;
                             this.setState(newState);
                         }
                     });

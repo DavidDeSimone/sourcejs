@@ -5,10 +5,11 @@ export module Diff {
     declare const Diff2HtmlUI;
     declare const global;
 
-    require('./node_modules/diff2html/dist/diff2html-ui.js');
+
     // This is gross, but the diff UI helper needs jQuery in the global namespace
     // @TODO find a better way to do this bullshit
     global.$ = require('jquery');
+    require('./node_modules/diff2html/dist/diff2html-ui.js');
     let dif2html = require("diff2html").Diff2Html;
     const _ = require('lodash');
     const React = require('react');
