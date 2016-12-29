@@ -1,3 +1,5 @@
+declare const GitGraph;
+
 import { Hg } from './hg.js';
 import { Source } from './repository.js';
 import _ = require('lodash');
@@ -5,9 +7,9 @@ import React = require('react');
 import ReactDOM = require('react-dom');
 
 export module Tree {
-    declare const GitGraph;
-    require(process.cwd() + '/gitgraph.js/build/gitgraph.min.js');
 
+    require(process.cwd() + '/gitgraph.js/build/gitgraph.min.js');
+    
     const myTemplateConfig = {
         colors: ["#F00", "#0F0", "#00F"], // branches colors, 1 per column
         branch: {
@@ -32,8 +34,15 @@ export module Tree {
         }
     };
 
-    export class Component extends React.Component {
-        private state: Object;
+    interface Props {
+
+    }
+
+    interface State {
+
+    }
+
+    export class Component extends React.Component<Props, State> {
         private graph: Object;
         private repo: Source.Repository<Hg>;
         private graphTemplate: Object;

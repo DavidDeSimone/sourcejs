@@ -1,4 +1,5 @@
 declare const global;
+declare const Diff2HtmlUI;
 
 import { Hg } from './hg.js';
 import { Source } from './repository.js';

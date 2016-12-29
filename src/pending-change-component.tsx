@@ -6,13 +6,21 @@ import _ = require('lodash');
 
 
 interface State {
-    status: string,
+    status: Array<Object>,
     commitMsg: string,
+    pendingAddsRemoves: Array<string>,
+    entryStyles: Object
 }
 
 interface Props {
-
+    repo: Source.Repository<Hg>
 }
+
+interface FileEntry {
+    fileName: string,
+    changeType: string
+}
+
 
 export module PendingChange {
     export class Component extends React.Component<Props, State> {
@@ -21,7 +29,7 @@ export module PendingChange {
         constructor(props) {
             super(props);
             this.repo = props.repo;
-            this.state = { status: null, commitMsg: '' };
+            this.state = { status: null, commitMsg: '', pendingAddsRemoves: [], entryStyles: {}};
         }
 
         componentDidMount() {
@@ -37,14 +45,27 @@ export module PendingChange {
             this.repo.Status().then(result => {
                 this.setState({
                     status: result
-                });
+                } as State);
             });
         }
 
         handleTextInput(event: Event) {
             this.setState({
                 commitMsg: event.target.value
-            });
+            } as State);
+        }
+
+        handleFileClick(entry: FileEntry, event: Event) {
+	    this.setState((prevState: State, props: Props) => {
+		prevState.pendingAddsRemoves.push(entry.fileName);
+		prevState.entryStyles[entry.fileName]
+		= prevState.entryStyles[entry.fileName] || {};
+		prevState.entryStyles[entry.fileName].backgroundColor = "green";
+		return {
+		    entryStyles: prevState.entryStyles,
+		    pendingAddsRemoves: prevState.pendingAddsRemoves
+		} as State
+	    });
         }
 
         handleSubmit(event: Event) {
@@ -53,7 +74,7 @@ export module PendingChange {
                 .then(() => {
                     this.setState({
                         commitMsg: ''
-                    });
+                    } as State);
                 })
                 .catch((error) => {
                     alert(`There has been a problem while attempting to commit, ${error.stdout}`);
@@ -63,7 +84,13 @@ export module PendingChange {
         render() {
             const listItems = _(this.state.status)
                 .map(entry =>
-                    <li key={entry.fileName}>{entry.changeType}: {entry.fileName}</li>
+                    <li
+                        key={entry.fileName}
+                        onClick={this.handleFileClick.bind(this, entry)}
+			style={this.state.entryStyles[entry.fileName] || {}}
+		    >
+                        {entry.changeType}: {entry.fileName}
+                    </li>
                 ).value();
             return (
                 <div>
