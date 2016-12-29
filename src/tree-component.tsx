@@ -14,19 +14,19 @@ export module Tree {
         colors: ["#F00", "#0F0", "#00F"], // branches colors, 1 per column
         branch: {
             lineWidth: 10,
-            spacingX: 25,
+            spacingX: 35,
             showLabel: true,                  // display branch names on graph
         },
         commit: {
-            spacingY: -80,
+            spacingY: -30,
             dot: {
-                size: 15
+                size: 10
             },
             message: {
                 displayAuthor: true,
                 displayBranch: false,
                 displayHash: false,
-                font: "normal 12pt Arial"
+                font: "normal 10pt Arial"
             },
             tooltipHTMLFormatter: function (commit) {
                 return "" + commit.sha1 + "" + ": " + commit.message;
@@ -72,6 +72,7 @@ export module Tree {
         }
 
         tick() {
+            // Rendering can be controlled/limited by passing a '-l' flag here
             this.repo.Log().then(commits => {
                 var lastCommit = this.state.commits[0] || { hash: 0 };
                 if (lastCommit.hash !== commits[0].hash) {
@@ -105,10 +106,16 @@ export module Tree {
                             currentBranch = defaultBranch;
                         }
 
+                        // Use this commit config if it's a merge commit
+                        /* dotColor: "white",
+			 * dotSize: 8,
+			 * dotStrokeWidth: 8,
+			 */
+
                         currentBranch.commit({
                             message: commit.summary,
                             author: commit.user,
-                            sha1: commit.hash
+                            sha1: commit.hash,
                         });
                     });
 
