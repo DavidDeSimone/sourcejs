@@ -17,6 +17,8 @@ export module Source {
 
         Branches(flags?: string): string;
         ParseBranches(result: string): Array<string>;
+
+        Add(fileName: string, flags?: string);
     }
 
     export class Repository<T extends RepositoryImplementation> {
@@ -58,6 +60,10 @@ export module Source {
         public Branches(flags?: string): PromiseLike<Array<string>> {
             return this._exec(this.strategy.Branches(flags))
                 .then(this.strategy.ParseBranches.bind(this.strategy));
+        }
+
+        public Add(fileName: string, flags?: string) {
+            return this._exec(this.strategy.Add(fileName, flags);
         }
     }
 }

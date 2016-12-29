@@ -71,4 +71,9 @@ export class Hg {
         });
         return returnValue;
     }
+
+    public Add(fileName: string, flags?: string) {
+        flags = flags || '';
+        return `hg add ${fileName} ${flags}`;
+    }
 }

@@ -29,7 +29,7 @@ export module PendingChange {
         constructor(props) {
             super(props);
             this.repo = props.repo;
-            this.state = { status: null, commitMsg: '', pendingAddsRemoves: [], entryStyles: {}};
+            this.state = { status: null, commitMsg: '', pendingAddsRemoves: [], entryStyles: {} };
         }
 
         componentDidMount() {
@@ -56,16 +56,17 @@ export module PendingChange {
         }
 
         handleFileClick(entry: FileEntry, event: Event) {
-	    this.setState((prevState: State, props: Props) => {
-		prevState.pendingAddsRemoves.push(entry.fileName);
-		prevState.entryStyles[entry.fileName]
-		= prevState.entryStyles[entry.fileName] || {};
-		prevState.entryStyles[entry.fileName].backgroundColor = "green";
-		return {
-		    entryStyles: prevState.entryStyles,
-		    pendingAddsRemoves: prevState.pendingAddsRemoves
-		} as State
-	    });
+            this.setState((prevState: State, props: Props) => {
+                prevState.pendingAddsRemoves.push(entry.fileName);
+                prevState.entryStyles[entry.fileName] = prevState.entryStyles[entry.fileName]
+                    || {};
+                prevState.entryStyles[entry.fileName].backgroundColor = "green";
+                this.repo.Add(entry.fileName);
+                return {
+                    entryStyles: prevState.entryStyles,
+                    pendingAddsRemoves: prevState.pendingAddsRemoves
+                } as State
+            });
         }
 
         handleSubmit(event: Event) {
@@ -87,8 +88,8 @@ export module PendingChange {
                     <li
                         key={entry.fileName}
                         onClick={this.handleFileClick.bind(this, entry)}
-			style={this.state.entryStyles[entry.fileName] || {}}
-		    >
+                        style={this.state.entryStyles[entry.fileName] || {}}
+                        >
                         {entry.changeType}: {entry.fileName}
                     </li>
                 ).value();
