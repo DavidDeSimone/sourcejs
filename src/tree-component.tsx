@@ -1,3 +1,4 @@
+// Gitgraph will be included from a non-module require
 declare const GitGraph;
 declare const Promise;
 import { Hg } from './hg.js';
@@ -40,6 +41,8 @@ export module Tree {
 
     interface Commit {
         branch?: string,
+        otherBranchParent?: string,
+        otherBranchParentName?: string
         summary: string,
         user: string,
         hash: string
@@ -76,9 +79,26 @@ export module Tree {
             this.repo.Log().then(commits => {
                 var lastCommit = this.state.commits[0] || { hash: 0 };
                 if (lastCommit.hash !== commits[0].hash) {
-                    this.setState({
-                        commits
-                    } as State);
+                    const parentCommitPromises = [];
+                    _(commits)
+                        .forEach(commit => {
+                            const commitValue = commit as Commit;
+                            if (commitValue.otherBranchParent
+                                && !commitValue.otherBranchParentName) {
+                                const promise = this.repo.Log(`--rev ${commitValue.otherBranchParent} --template "{branch}"`)
+                                    .then((result) => {
+                                        commitValue.otherBranchParentName = result[0] as string;
+                                    });
+                                parentCommitPromises.push(promise);
+                            }
+                        });
+
+                    Promise.all(parentCommitPromises)
+                        .then(() => {
+                            this.setState({
+                                commits
+                            } as State);
+                        });
                 }
             });
         }
@@ -106,17 +126,24 @@ export module Tree {
                             currentBranch = defaultBranch;
                         }
 
-                        // Use this commit config if it's a merge commit
-                        /* dotColor: "white",
-			 * dotSize: 8,
-			 * dotStrokeWidth: 8,
-			 */
+                        if (commit.otherBranchParent) {
+                            const branch = branches[commit.otherBranchParentName];
+                            branch.merge(currentBranch, {
+                                message: commit.summary,
+                                author: commit.user,
+                                sha1: commit.hash,
+                                dotColor: "white",
+                                dotSize: 8,
+                                dotStrokeWidth: 8,
+                            });
+                        } else {
+                            currentBranch.commit({
+                                message: commit.summary,
+                                author: commit.user,
+                                sha1: commit.hash,
+                            });
+                        }
 
-                        currentBranch.commit({
-                            message: commit.summary,
-                            author: commit.user,
-                            sha1: commit.hash,
-                        });
                     });
 
             }

@@ -5,22 +5,38 @@ export class Hg {
         return `hg log ${args}`;
     }
 
-    public ParseLog(result: string): Array<Object> {
+    public ParseLog(args: string, result: string): Array<Object> {
+        if (_.includes(args, '--template')) {
+            return [result];
+        }
+
         const lines: Array<string> = result.split('\n\n');
         const returnValue: Array<Object> = [];
-        _(lines).forEach(entry => {
-            if (!entry) return; // Dont do anything with ""
-            const entryObject: Object = {};
-            _(entry.split('\n')).forEach(line => {
-                var parts: Array<string> = line.split(':');
-                entryObject[parts[0].trim()] = parts[1].trim();
-                if (parts[0].indexOf('changeset') > -1) {
-                    // special case...
-                    entryObject['hash'] = parts[2].trim();
-                }
+        _(lines)
+            .reject(line => !line)
+            .forEach(entry => {
+                const entryObject: Object = {};
+                _(entry.split('\n'))
+                    .forEach(line => {
+                        let parts: Array<string> = line.split(':');
+                        parts = _(parts)
+                            .map(part => part.trim())
+                            .value();
+
+
+                        if (parts[0] === 'parent'
+                            && entryObject.hasOwnProperty('parent')) {
+                            parts[0] = 'otherBranchParent';
+                        }
+
+                        entryObject[parts[0]] = parts[1];
+                        if (_.includes(parts[0], 'changeset')) {
+                            // special case...
+                            entryObject['hash'] = parts[2];
+                        }
+                    });
+                returnValue.push(entryObject);
             });
-            returnValue.push(entryObject);
-        });
 
         return returnValue;
     }

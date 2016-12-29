@@ -6,7 +6,7 @@ export module Source {
     const exec = require('child_process').exec;
     interface RepositoryImplementation {
         Log(args?: string): string;
-        ParseLog(result: string): Array<Object>;
+        ParseLog(args: string, result: string): Array<Object>;
 
         Status(args?: string): string;
         ParseStatus(result: string): Array<Object>;
@@ -46,7 +46,7 @@ export module Source {
         }
         public Log(args?: string): PromiseLike<Array<Object>> {
             return this._exec(this.strategy.Log(args))
-                .then(this.strategy.ParseLog.bind(this.strategy));
+                .then(this.strategy.ParseLog.bind(this.strategy, args));
         }
 
         public Commit(message: string, flags?: string): PromiseLike<string> {
@@ -63,7 +63,7 @@ export module Source {
         }
 
         public Add(fileName: string, flags?: string) {
-            return this._exec(this.strategy.Add(fileName, flags);
+            return this._exec(this.strategy.Add(fileName, flags));
         }
     }
 }
