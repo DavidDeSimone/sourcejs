@@ -1,4 +1,4 @@
-const _ = require('lodash');
+import _ = require('lodash');
 export class Hg {
     public Log(args?: string): string {
         args = args || '';

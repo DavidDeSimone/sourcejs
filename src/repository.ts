@@ -1,9 +1,9 @@
 declare const GitGraph;
 declare const Promise;
+import _ = require('lodash');
+
 export module Source {
     const exec = require('child_process').exec;
-    const _ = require('lodash');
-
     interface RepositoryImplementation {
         Log(args?: string): string;
         ParseLog(result: string): Array<Object>;

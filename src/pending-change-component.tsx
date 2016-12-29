@@ -1,14 +1,21 @@
-import { Hg } from './hg.js';
-import { Source } from './repository.js';
+import { Hg } from './hg';
+import { Source } from './repository';
+import React = require('react');
+import ReactDOM = require('react-dom');
+import _ = require('lodash');
+
+
+interface State {
+    status: string,
+    commitMsg: string,
+}
+
+interface Props {
+
+}
 
 export module PendingChange {
-    const React = require('react');
-    const ReactDOM = require('react-dom');
-    const _ = require('lodash');
-
-
-    export class Component extends React.Component {
-        private state;
+    export class Component extends React.Component<Props, State> {
         private timerId;
         private repo: Source.Repository<Hg>;
         constructor(props) {
@@ -58,7 +65,6 @@ export module PendingChange {
                 .map(entry =>
                     <li key={entry.fileName}>{entry.changeType}: {entry.fileName}</li>
                 ).value();
-            // @TODO move out the commit message stuff into its own component
             return (
                 <div>
                     <b>File Status:</b>

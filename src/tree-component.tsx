@@ -1,12 +1,12 @@
 import { Hg } from './hg.js';
 import { Source } from './repository.js';
+import _ = require('lodash');
+import React = require('react');
+import ReactDOM = require('react-dom');
 
 export module Tree {
     declare const GitGraph;
-    const React = require('react');
-    const ReactDOM = require('react-dom');
-    const _ = require('lodash');
-    require('./gitgraph.js/build/gitgraph.min.js');
+    require(process.cwd() + '/gitgraph.js/build/gitgraph.min.js');
 
     const myTemplateConfig = {
         colors: ["#F00", "#0F0", "#00F"], // branches colors, 1 per column

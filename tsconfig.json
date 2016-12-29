@@ -1,7 +1,6 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-	"module": "system",
 	"outDir": "build/",
 	"preserveConstEnums": true,
 	"sourceMap": true,
@@ -9,6 +8,7 @@
     },
     "include": [
 	"src/**/*",
+	"typings/index.d.ts",
 	"./*"
     ],
     "exclude": [
