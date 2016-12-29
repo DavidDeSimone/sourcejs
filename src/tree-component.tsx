@@ -38,9 +38,15 @@ export module Tree {
 
     }
 
-    // @TODO update branches to be an array we iterate over
-    interface State {
+    interface Commit {
+        branch?: string,
+        summary: string,
+        user: string,
+        hash: string
+    }
 
+    interface State {
+        commits: Array<Commit>
     }
 
     export class Component extends React.Component<Props, State> {
@@ -53,7 +59,7 @@ export module Tree {
         constructor(props) {
             super(props);
             this.repo = props.repo;
-            this.state = {};
+            this.state = { commits: [] };
             this.graphTemplate = new GitGraph.Template(myTemplateConfig);
         }
 
@@ -66,36 +72,13 @@ export module Tree {
         }
 
         tick() {
-            this.repo.Branches().then(branches => {
-                _(branches).forEach(branch => {
-                    const getBranchCommit = this.repo.Log(`-b ${branch}`);
-                    const getParentCommit = this.repo.Log(`-r "parents(min(branch(${branch})))"`);
-                    Promise.all([getBranchCommit, getParentCommit])
-                        .then(result => {
-                            const commits = result[0];
-                            const parent = result[1];
-                            const branchState = {
-                                name: branch,
-                                parent: parent,
-                                commits: []
-                            };
-                            _(commits)
-                                .map(commit => {
-                                    return {
-                                        message: commit.summary,
-                                        author: commit.user,
-                                        sha1: commit.hash
-                                    }
-                                })
-                                .forEach(commit => branchState.commits.push(commit));
-                            if ((!this.state[branch]) || (this.state[branch].commits[0].sha1
-                                !== branchState.commits[0].sha1)) {
-                                const newState = {};
-                                newState[branch] = branchState;
-                                this.setState(newState);
-                            }
-                        });
-                });
+            this.repo.Log().then(commits => {
+                var lastCommit = this.state.commits[0] || { hash: 0 };
+                if (lastCommit.hash !== commits[0].hash) {
+                    this.setState({
+                        commits
+                    } as State);
+                }
             });
         }
 
@@ -103,19 +86,36 @@ export module Tree {
             if (this.renderInitalized) {
                 this.graph = new GitGraph({
                     template: this.graphTemplate,
+                    orientation: "vertical-reverse",
                 });
 
-                const branchMap = {};
-                _(this.state).forOwn((branch, branchName) => {
-                    let graphBranch = this.graph.branch(branchName);
-                    branchMap[branchName] = graphBranch;
-                    _(branch.commits).forEach(graphBranch.commit.bind(graphBranch));
-                });
+                const branches = {};
+                const defaultBranch = this.graph.branch('default');
+                let currentBranch = defaultBranch;
+                _(this.state.commits)
+                    .forEachRight(commit => {
+                        if (commit.branch) {
+                            currentBranch = branches[commit.branch]
+                                || this.graph.branch({
+                                    name: commit.branch,
+                                    parentBranch: currentBranch
+                                });
+                            branches[commit.branch] = currentBranch;
+                        } else {
+                            currentBranch = defaultBranch;
+                        }
+
+                        currentBranch.commit({
+                            message: commit.summary,
+                            author: commit.user,
+                            sha1: commit.hash
+                        });
+                    });
+
             }
 
             this.renderInitalized = true;
             return <canvas id="gitGraph"></canvas>;
         }
     }
-
 }
