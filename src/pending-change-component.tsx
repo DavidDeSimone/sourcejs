@@ -4,7 +4,6 @@ import React = require('react');
 import ReactDOM = require('react-dom');
 import _ = require('lodash');
 
-
 interface State {
     status: Array<Object>,
     commitMsg: string,
@@ -19,6 +18,20 @@ interface Props {
 interface FileEntry {
     fileName: string,
     changeType: string
+}
+
+const FileSelectionStyle: Object = {
+    borderRadius: "25px",
+    backgroundColor: "#73AD21",
+    padding: "12px",
+    color: "white",
+};
+
+enum Action {
+    SELECT,
+    UNSELECT,
+    TOGGLE,
+    SELECT_IF_UNINITALIZED
 }
 
 
@@ -43,6 +56,8 @@ export module PendingChange {
 
         tick() {
             this.repo.Status().then(result => {
+                _(result)
+                    .forEach(entry => this.setFileVisibility(entry.fileName, Action.SELECT_IF_UNINITALIZED));
                 this.setState({
                     status: result
                 } as State);
@@ -55,18 +70,50 @@ export module PendingChange {
             } as State);
         }
 
-        handleFileClick(entry: FileEntry, event: Event) {
+        private setFileVisibility(fileName: string, action: Action) {
             this.setState((prevState: State, props: Props) => {
-                prevState.pendingAddsRemoves.push(entry.fileName);
-                prevState.entryStyles[entry.fileName] = prevState.entryStyles[entry.fileName]
-                    || {};
-                prevState.entryStyles[entry.fileName].backgroundColor = "green";
-                this.repo.Add(entry.fileName);
+                let fileState = _.cloneDeep(prevState.entryStyles[fileName]);
+                fileState = _.assign(fileState, FileSelectionStyle);
+
+                switch (action) {
+                    case Action.SELECT:
+                        fileState.opacity = 1;
+                        break;
+                    case Action.UNSELECT:
+                        fileState.opacity = 0.5;
+                        break;
+                    case Action.TOGGLE:
+                        fileState.opacity = fileState.opacity === 1
+                            ? 0.5 : 1;
+                        break;
+                    case Action.SELECT_IF_UNINITALIZED:
+                        if (!fileState.hasOwnProperty('opacity')) {
+                            fileState.opacity = 1;
+                        }
+
+                        break;
+                }
+                prevState.entryStyles[fileName] = fileState;
                 return {
-                    entryStyles: prevState.entryStyles,
+                    entryStyles: prevState.entryStyles
+                } as State;
+            });
+        }
+
+        private addFile(fileName: string) {
+            this.setState((prevState: State, props: Props) => {
+                prevState.pendingAddsRemoves.push(fileName);
+                this.repo.Add(fileName);
+                return {
                     pendingAddsRemoves: prevState.pendingAddsRemoves
                 } as State
             });
+        }
+
+
+        handleFileClick(entry: FileEntry, event: Event) {
+            this.setFileVisibility(entry.fileName, Action.TOGGLE);
+            this.addFile(entry.fileName);
         }
 
         handleSubmit(event: Event) {
@@ -84,6 +131,7 @@ export module PendingChange {
 
         render() {
             const listItems = _(this.state.status)
+                .reject(entry => _.endsWith(entry.fileName, '.orig'))
                 .map(entry =>
                     <li
                         key={entry.fileName}
@@ -96,7 +144,7 @@ export module PendingChange {
             return (
                 <div>
                     <b>File Status:</b>
-                    <ul>{listItems}</ul>
+                    <ul style={{ listStyleType: "none", paddingLeft: 0 }}>{listItems}</ul>
                     <form onSubmit={this.handleSubmit.bind(this)}>
                         <label>
                             Message:

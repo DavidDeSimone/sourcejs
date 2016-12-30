@@ -7,7 +7,8 @@ import React = require('react');
 import ReactDOM = require('react-dom');
 import _ = require('lodash');
 
-// Initalize Repo
+
+// Initalize Repo.
 let Repo = new Source.Repository<Hg>(Hg, process.cwd());
 interface Props { }
 interface State { }
