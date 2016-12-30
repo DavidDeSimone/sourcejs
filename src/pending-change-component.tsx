@@ -118,7 +118,15 @@ export module PendingChange {
 
         handleSubmit(event: Event) {
             event.preventDefault();
-            this.repo.Commit(this.state.commitMsg)
+            let args: string = '';
+            _(this.state.status)
+                .reject(entry =>
+                    this.state.entryStyles[entry.fileName].opacity !== 1
+                )
+                .forEach(entry => {
+                    args += ` ${entry.fileName} `;
+                });
+            this.repo.Commit(this.state.commitMsg, args)
                 .then(() => {
                     this.setState({
                         commitMsg: ''
