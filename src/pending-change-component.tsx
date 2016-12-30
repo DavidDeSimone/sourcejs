@@ -72,6 +72,8 @@ export module PendingChange {
 
         private setFileVisibility(fileName: string, action: Action) {
             this.setState((prevState: State, props: Props) => {
+                // @TODO this shouldnt manipulate css state directly.
+                // It should set variables that cause CSS to be set in render()
                 let fileState = _.cloneDeep(prevState.entryStyles[fileName]);
                 fileState = _.assign(fileState, FileSelectionStyle);
 
@@ -121,6 +123,8 @@ export module PendingChange {
             let args: string = '';
             _(this.state.status)
                 .reject(entry =>
+                    // This is bad, it's UI state driving business logic. This should
+                    // the other way around. 
                     this.state.entryStyles[entry.fileName].opacity !== 1
                 )
                 .forEach(entry => {

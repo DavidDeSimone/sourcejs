@@ -11,6 +11,13 @@ export module Tree {
 
     require(process.cwd() + '/gitgraph.js/build/gitgraph.min.js');
 
+
+    const currentHeadTemplate = {
+        dotColor: "white",
+        dotSize: 16,
+        dotStrokeWidth: 16,
+    };
+
     const myTemplateConfig = {
         colors: ["#F00", "#0F0", "#00F"], // branches colors, 1 per column
         branch: {
@@ -19,12 +26,12 @@ export module Tree {
             showLabel: true,                  // display branch names on graph
         },
         commit: {
-            spacingY: -30,
+            spacingY: -40,
             dot: {
                 size: 10
             },
             message: {
-                displayAuthor: true,
+                displayAuthor: false,
                 displayBranch: false,
                 displayHash: false,
                 font: "normal 10pt Arial"
@@ -49,7 +56,8 @@ export module Tree {
     }
 
     interface State {
-        commits: Array<Commit>
+        commits: Array<Commit>,
+        currentHead: string
     }
 
     export class Component extends React.Component<Props, State> {
@@ -62,7 +70,7 @@ export module Tree {
         constructor(props) {
             super(props);
             this.repo = props.repo;
-            this.state = { commits: [] };
+            this.state = { commits: [], currentHead: '' };
             this.graphTemplate = new GitGraph.Template(myTemplateConfig);
         }
 
@@ -75,31 +83,55 @@ export module Tree {
         }
 
         tick() {
-            // Rendering can be controlled/limited by passing a '-l' flag here
-            this.repo.Log().then(commits => {
-                var lastCommit = this.state.commits[0] || { hash: 0 };
-                if (lastCommit.hash !== commits[0].hash) {
-                    const parentCommitPromises = [];
-                    _(commits)
-                        .forEach(commit => {
-                            const commitValue = commit as Commit;
-                            if (commitValue.otherBranchParent
-                                && !commitValue.otherBranchParentName) {
-                                const promise = this.repo.Log(`--rev ${commitValue.otherBranchParent} --template "{branch}"`)
-                                    .then((result) => {
-                                        commitValue.otherBranchParentName = result[0] as string;
-                                    });
-                                parentCommitPromises.push(promise);
-                            }
-                        });
+            this.repo.Id('-i')
+                .then(id => {
+                    if (this.state.currentHead !== id)
+                        this.setState({ currentHead: id } as State);
+                })
+                .then(this.repo.Log.bind(this.repo))
+                // Rendering can be controlled/limited by passing a '-l' flag here
+                .then(commits => {
+                    var lastCommit = this.state.commits[0] || { hash: 0 };
+                    if (lastCommit.hash !== commits[0].hash) {
+                        const parentCommitPromises = [];
+                        _(commits)
+                            .forEach(commit => {
+                                const commitValue = commit as Commit;
+                                if (commitValue.otherBranchParent
+                                    && !commitValue.otherBranchParentName) {
+                                    const promise = this.repo.Log(`--rev ${commitValue.otherBranchParent} --template "{branch}"`)
+                                        .then((result) => {
+                                            commitValue.otherBranchParentName = result[0] as string;
+                                        });
+                                    parentCommitPromises.push(promise);
+                                }
+                            });
 
-                    Promise.all(parentCommitPromises)
-                        .then(() => {
-                            this.setState({
-                                commits
-                            } as State);
-                        });
-                }
+                        Promise.all(parentCommitPromises)
+                            .then(() => {
+                                this.setState({
+                                    commits
+                                } as State);
+                            });
+                    }
+                });
+        }
+
+        handleCommitMouseover(event: Event) {
+            console.log('event');
+        }
+
+        handleCommitMousedown(commit: Commit, isOverCommit: boolean, event: MouseEvent) {
+            console.log(arguments);
+        }
+
+        handleCommitDblClick(event: MouseEvent) {
+            this.graph.applyCommits(event, (commit, isOverCommit, event) => {
+                if (!isOverCommit) return;
+                this.repo.Update(commit.sha1)
+                    .catch((err) => {
+                        alert(`There has been an error switching, ${err}`);
+                    });
             });
         }
 
@@ -109,6 +141,11 @@ export module Tree {
                     template: this.graphTemplate,
                     orientation: "vertical-reverse",
                 });
+
+                this.graph.canvas.addEventListener("commit:mouseover",
+                    this.handleCommitMouseover.bind(this));
+                this.graph.canvas.addEventListener("dblclick",
+                    this.handleCommitDblClick.bind(this));
 
                 const branches = {};
                 const defaultBranch = this.graph.branch('default');
@@ -126,6 +163,19 @@ export module Tree {
                             currentBranch = defaultBranch;
                         }
 
+
+                        let template = null;
+                        const commitDetails = {
+                            message: commit.summary,
+                            author: commit.user,
+                            sha1: commit.hash,
+                            onClick: this.handleCommitMousedown.bind(this)
+                        };
+
+                        if (this.state.currentHead.includes(commit.hash)) {
+                            template = currentHeadTemplate;
+                        }
+
                         if (commit.otherBranchParent) {
                             const branch = branches[commit.otherBranchParentName];
                             branch.merge(currentBranch, {
@@ -135,13 +185,10 @@ export module Tree {
                                 dotColor: "white",
                                 dotSize: 8,
                                 dotStrokeWidth: 8,
+                                onClick: this.handleCommitMousedown.bind(this)
                             });
                         } else {
-                            currentBranch.commit({
-                                message: commit.summary,
-                                author: commit.user,
-                                sha1: commit.hash,
-                            });
+                            currentBranch.commit(_.assign(commitDetails, template));
                         }
 
                     });

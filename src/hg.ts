@@ -92,4 +92,14 @@ export class Hg {
         flags = flags || '';
         return `hg add ${fileName} ${flags}`;
     }
+
+    public Update(rev: string, flags?: string): string {
+        flags = flags || '';
+        return `hg update ${flags} ${rev}`;
+    }
+
+    public Id(flags?: string): string {
+        flags = flags || '';
+        return `hg id ${flags}`;
+    }
 }
