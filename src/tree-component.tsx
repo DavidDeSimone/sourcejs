@@ -82,39 +82,41 @@ export module Tree {
             clearInterval(this.timerId);
         }
 
+        private updateCommitStatus(commits: Array<Commit>): void {
+            var lastCommit = this.state.commits[0] || { hash: 0 };
+            if (lastCommit.hash !== commits[0].hash) {
+                const parentCommitPromises = [];
+                _(commits)
+                    .forEach(commit => {
+                        const commitValue = commit as Commit;
+                        if (commitValue.otherBranchParent
+                            && !commitValue.otherBranchParentName) {
+                            const promise = this.repo.Log(`--rev ${commitValue.otherBranchParent} --template "{branch}"`)
+                                .then((result) => {
+                                    commitValue.otherBranchParentName = result[0] as string;
+                                });
+                            parentCommitPromises.push(promise);
+                        }
+                    });
+
+                Promise.all(parentCommitPromises)
+                    .then(() => {
+                        this.setState({
+                            commits
+                        } as State);
+                    });
+            }
+        }
+
         tick() {
             this.repo.Id('-i')
                 .then(id => {
                     if (this.state.currentHead !== id)
                         this.setState({ currentHead: id } as State);
                 })
-                .then(this.repo.Log.bind(this.repo))
                 // Rendering can be controlled/limited by passing a '-l' flag here
-                .then(commits => {
-                    var lastCommit = this.state.commits[0] || { hash: 0 };
-                    if (lastCommit.hash !== commits[0].hash) {
-                        const parentCommitPromises = [];
-                        _(commits)
-                            .forEach(commit => {
-                                const commitValue = commit as Commit;
-                                if (commitValue.otherBranchParent
-                                    && !commitValue.otherBranchParentName) {
-                                    const promise = this.repo.Log(`--rev ${commitValue.otherBranchParent} --template "{branch}"`)
-                                        .then((result) => {
-                                            commitValue.otherBranchParentName = result[0] as string;
-                                        });
-                                    parentCommitPromises.push(promise);
-                                }
-                            });
-
-                        Promise.all(parentCommitPromises)
-                            .then(() => {
-                                this.setState({
-                                    commits
-                                } as State);
-                            });
-                    }
-                });
+                .then(this.repo.Log.bind(this.repo))
+                .then(this.updateCommitStatus.bind(this);
         }
 
         handleCommitMouseover(event: Event) {
