@@ -9,7 +9,7 @@ npm install
 
 and build typescript via
 
-npm install typescript && tsc in the root dir
+./node_modules/typescript/bin/tsc
 
 Running:
 
