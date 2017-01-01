@@ -7,9 +7,12 @@ import React = require('react');
 import ReactDOM = require('react-dom');
 import _ = require('lodash');
 
+const repoPath = localStorage.getItem('setOpenRepo') || process.cwd();
+localStorage.setItem('setOpenRepo', null);
+console.log(`Opening new view for repo ${repoPath}`);
 
 // Initalize Repo.
-let Repo = new Source.Repository<Hg>(Hg, process.cwd());
+let Repo = new Source.Repository<Hg>(Hg, repoPath);
 interface Props { }
 interface State { }
 class App extends React.Component<Props, State> {
