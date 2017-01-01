@@ -116,7 +116,7 @@ export module Tree {
                 })
                 // Rendering can be controlled/limited by passing a '-l' flag here
                 .then(this.repo.Log.bind(this.repo))
-                .then(this.updateCommitStatus.bind(this);
+                .then(this.updateCommitStatus.bind(this));
         }
 
         handleCommitMouseover(event: Event) {
