@@ -4,7 +4,7 @@
   "description": "A viewer for source control programs",
   "main": "build/main.js",
   "scripts": {
-    "start": "electron ./build/main.js"
+    "start": "./node_modules/.bin/electron ./build/main.js"
   },
   "repository": "https://github.com/DavidDeSimone/sourcejs",
   "keywords": [
