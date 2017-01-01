@@ -17,14 +17,14 @@
   "author": "GitHub",
   "license": "MIT",
   "dependencies": {
+    "bluebird": "^3.4.7",
     "diff2html": "2.0.11",
-    "react": "15.4.1",
-    "lodash": "4.17.2",
     "jquery": "3.1.1",
+    "lodash": "4.17.2",
+    "react": "15.4.1",
     "react-dom": "15.4.1"
   },
   "devDependencies": {
     "electron": "^1.4.1"
   }
 }
-
