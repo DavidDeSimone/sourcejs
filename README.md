@@ -3,6 +3,9 @@ A version control viewer for mecurial/git written for electron. Written in types
 
 Building:
 
+First download the submodule
+```git submodule update --init```
+
 To build, download deps via
 
 npm install
