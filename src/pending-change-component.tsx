@@ -4,27 +4,30 @@ import ReactDOM = require('react-dom');
 import _ = require('lodash');
 import Promise = require('bluebird');
 
+interface FileEntry {
+    fileName: string,
+    changeType: string,
+    pending: boolean
+}
+
 interface State {
-    status: Array<Object>,
-    commitMsg: string,
-    pendingAddsRemoves: Array<string>,
-    entryStyles: Object
+    status: Array<FileEntry>,
+    commitMsg: string
 }
 
 interface Props {
-    repo: Source.Repository<Hg>
+    repo: Repository.Hg
 }
 
-interface FileEntry {
-    fileName: string,
-    changeType: string
-}
-
-const FileSelectionStyle: Object = {
+const fileSelectionStyle: Object = {
     borderRadius: "25px",
-    backgroundColor: "#73AD21",
+    backgroundColor: "#778899",
     padding: "12px",
     color: "white",
+};
+
+const listStyle = {
+    listStyleType: "none", paddingLeft: 0
 };
 
 enum Action {
@@ -34,7 +37,6 @@ enum Action {
     SELECT_IF_UNINITALIZED
 }
 
-
 export module PendingChange {
     export class Component extends React.Component<Props, State> {
         private timerId;
@@ -42,7 +44,7 @@ export module PendingChange {
         constructor(props) {
             super(props);
             this.repo = props.repo;
-            this.state = { status: null, commitMsg: '', pendingAddsRemoves: [], entryStyles: {} };
+            this.state = { status: null, commitMsg: '' };
         }
 
         componentDidMount() {
@@ -56,10 +58,20 @@ export module PendingChange {
 
         tick() {
             this.repo.Status().then(result => {
+                const map = {};
+                _(this.state.status)
+                    .forEach((entry: FileEntry) => map[entry.fileName] = entry.pending);
+
                 _(result)
-                    .filter((entry: FileEntry) => entry.changeType !== '?')
-                    .forEach((entry: FileEntry) =>
-                        this.setFileVisibility(entry.fileName, Action.SELECT_IF_UNINITALIZED));
+                    .reject((entry: FileEntry) => entry.changeType === '?' || entry.changeType === '!')
+                    .forEach((entry: FileEntry) => {
+                        if (!map.hasOwnProperty(entry.fileName)) {
+                            entry.pending = true;
+                        } else {
+                            entry.pending = map[entry.fileName];
+                        }
+                    });
+
                 this.setState({
                     status: result
                 } as State);
@@ -72,78 +84,34 @@ export module PendingChange {
             } as State);
         }
 
-        private setFileVisibility(fileName: string, action: Action) {
-            this.setState((prevState: State, props: Props) => {
-                // @TODO this shouldnt manipulate css state directly.
-                // It should set variables that cause CSS to be set in render()
-                let fileState = _.cloneDeep(prevState.entryStyles[fileName]);
-                fileState = _.assign(fileState, FileSelectionStyle);
-
-                switch (action) {
-                    case Action.SELECT:
-                        fileState.opacity = 1;
-                        break;
-                    case Action.UNSELECT:
-                        fileState.opacity = 0.5;
-                        break;
-                    case Action.TOGGLE:
-                        fileState.opacity = fileState.opacity === 1
-                            ? 0.5 : 1;
-                        break;
-                    case Action.SELECT_IF_UNINITALIZED:
-                        if (!fileState.hasOwnProperty('opacity')) {
-                            fileState.opacity = 1;
-                        }
-
-                        break;
-                }
-                prevState.entryStyles[fileName] = fileState;
-                return {
-                    entryStyles: prevState.entryStyles
-                } as State;
-            });
-        }
-
-        private addFile(entry: FileEntry) {
-            this.setState((prevState: State, props: Props) => {
-                prevState.pendingAddsRemoves.push(entry.fileName);
-                if (entry.changeType === '!') {
-
-                } else if (entry.changeType === '?') {
-                    this.repo.Add(entry.fileName);
-                }
-
-                return {
-                    pendingAddsRemoves: prevState.pendingAddsRemoves
-                } as State
-            });
+        private addRemoveFile(entry: FileEntry) {
+            if (entry.changeType === '!') {
+                this.repo.Remove(entry.fileName);
+            } else if (entry.changeType === '?') {
+                this.repo.Add(entry.fileName);
+            }
         }
 
 
         handleFileClick(entry: FileEntry, event: Event) {
-            this.setFileVisibility(entry.fileName, Action.TOGGLE);
-            this.addFile(entry);
+            this.setState((prevState: State, props: Props) => {
+                entry.pending = !entry.pending;
+                return prevState;
+            });
+            this.addRemoveFile(entry);
         }
 
         handleSubmit(event: Event) {
             event.preventDefault();
-            let args: string = '';
-            _(this.state.status)
-                .reject((entry: FileEntry) => {
-                    // This is bad, it's UI state driving business logic. This should
-                    // the other way around. 
-                    return (!this.state.entryStyles[entry.fileName])
-                        || this.state.entryStyles[entry.fileName].opacity !== 1;
-                })
-                .forEach((entry: FileEntry) => {
-                    args += ` ${entry.fileName} `;
-                });
+
+            const args = _(this.state.status)
+                .filter((entry: FileEntry) => entry.pending)
+                .map((entry: FileEntry) => ` ${entry.fileName}`)
+                .value()
+                .join(' ');
+
             this.repo.Commit(this.state.commitMsg, args)
-                .then(() => {
-                    this.setState({
-                        commitMsg: ''
-                    } as State);
-                })
+                .then(this.setState.bind(this, { commitMsg: '' }))
                 .catch((error) => {
                     console.log(error);
                     alert(`There has been a problem while attempting to commit, ${error}`);
@@ -152,20 +120,32 @@ export module PendingChange {
 
         render() {
             const listItems = _(this.state.status)
-                .reject(entry => _.endsWith(entry.fileName, '.orig'))
-                .map(entry =>
-                    <li
+                .reject((entry: FileEntry) => _.endsWith(entry.fileName, '.orig'))
+                .map((entry: FileEntry) => {
+                    let style: any = {};
+                    if (entry.changeType !== '?' && entry.changeType !== '!') {
+                        style = _.clone(fileSelectionStyle);
+                        style.opacity = entry.pending ? 1 : 0.5;
+
+                        if (entry.changeType === 'R') {
+                            style.backgroundColor = "red";
+                        } else if (entry.changeType === 'A') {
+                            style.backgroundColor = "#73AD21";
+                        }
+                    }
+
+                    return <li
                         key={entry.fileName}
                         onClick={this.handleFileClick.bind(this, entry)}
-                        style={this.state.entryStyles[entry.fileName] || {}}
+                        style={style}
                         >
                         {entry.changeType}: {entry.fileName}
                     </li>
-                ).value();
+                }).value();
             return (
                 <div>
                     <b>File Status:</b>
-                    <ul style={{ listStyleType: "none", paddingLeft: 0 }}>{listItems}</ul>
+                    <ul style={listStyle}>{listItems}</ul>
                     <form onSubmit={this.handleSubmit.bind(this)}>
                         <label>
                             Message:
