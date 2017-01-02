@@ -47,6 +47,10 @@ export module Repository {
             return this._exec(`hg add ${fileName} ${flags || ''}`);
         }
 
+        public Remove(fileName: string, flags?: string): Promise<void> {
+            return this._exec(`hg rm ${fileName} ${flags || ''}`);
+        }
+
         public Update(rev: string, flags?: string): Promise<string> {
             return this._exec(`hg update ${flags || ''} ${rev}`);
         }
