@@ -1,5 +1,4 @@
-import { Hg } from './hg';
-import { Source } from './repository';
+import { Repository } from './repository';
 import { Diff } from './diff-component';
 import { PendingChange } from './pending-change-component';
 import { Tree } from './tree-component';
@@ -12,7 +11,7 @@ localStorage.setItem('setOpenRepo', null);
 console.log(`Opening new view for repo ${repoPath}`);
 
 // Initalize Repo.
-let Repo = new Source.Repository<Hg>(Hg, repoPath);
+let Repo = new Repository.Hg(repoPath);
 interface Props { }
 interface State { }
 class App extends React.Component<Props, State> {

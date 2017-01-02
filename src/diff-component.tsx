@@ -1,8 +1,7 @@
 declare const global;
 declare const Diff2HtmlUI;
 
-import { Hg } from './hg.js';
-import { Source } from './repository.js';
+import { Repository } from './repository.js';
 import HtmlDiff = require("diff2html");
 import _ = require('lodash');
 import React = require('react');
@@ -26,7 +25,7 @@ export module Diff {
 
     export class Component extends React.Component<Props, State> {
         private timerId;
-        private repo: Source.Repository<Hg>;
+        private repo: Repository.Hg;
         constructor(props) {
             super(props);
             this.repo = props.repo;

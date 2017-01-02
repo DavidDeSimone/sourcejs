@@ -1,34 +1,12 @@
 declare const GitGraph;
-declare const Promise;
 import _ = require('lodash');
+import Promise = require('bluebird');
 
-export module Source {
+export module Repository {
     const exec = require('child_process').exec;
-    interface RepositoryImplementation {
-        Log(args?: string): string;
-        ParseLog(args: string, result: string): Array<Object>;
 
-        Status(args?: string): string;
-        ParseStatus(result: string): Array<Object>;
-
-        Commit(message: string, flags?: string);
-
-        Diff(flags?: string);
-
-        Branches(flags?: string): string;
-        ParseBranches(result: string): Array<string>;
-
-        Add(fileName: string, flags?: string);
-
-        Update(rev: string, flags?: string): string;
-        Id(flags?: string): string;
-    }
-
-    export class Repository<T extends RepositoryImplementation> {
-        private repo;
-        private strategy: T;
-        constructor(c: { new (): T; }, public fullPath: string) {
-            this.strategy = new c();
+    export class Hg {
+        constructor(public fullPath: string) {
         }
 
         private _exec(command: string): any {
@@ -43,38 +21,106 @@ export module Source {
             });
         }
 
-        public Status(args?: string): PromiseLike<Array<Object>> {
-            return this._exec(this.strategy.Status(args))
-                .then(this.strategy.ParseStatus.bind(this.strategy));
+        public Status(args?: string): Promise<Array<Object>> {
+            return this._exec(`hg st ${args || ''}`)
+                .then(this.parseStatus.bind(this));
         }
-        public Log(args?: string): PromiseLike<Array<Object>> {
-            return this._exec(this.strategy.Log(args))
-                .then(this.strategy.ParseLog.bind(this.strategy, args));
-        }
-
-        public Commit(message: string, flags?: string): PromiseLike<string> {
-            return this._exec(this.strategy.Commit(message, flags));
+        public Log(args?: string): Promise<Array<Object>> {
+            return this._exec(`hg log ${args || ''}`)
+                .then(this.parseLog.bind(this, args || ''));
         }
 
-        public Diff(flags?: string): PromiseLike<string> {
-            return this._exec(this.strategy.Diff(flags));
+        public Commit(message: string, flags?: string): Promise<string> {
+            return this._exec(`hg commit ${flags || ''} -m "${message}"`);
         }
 
-        public Branches(flags?: string): PromiseLike<Array<string>> {
-            return this._exec(this.strategy.Branches(flags))
-                .then(this.strategy.ParseBranches.bind(this.strategy));
+        public Diff(flags?: string): Promise<string> {
+            return this._exec(`hg diff --git ${flags || ''}`);
+        }
+
+        public Branches(flags?: string): Promise<Array<string>> {
+            return this._exec(`hg branches ${flags || ''}`)
+                .then(this.parseBranches.bind(this));
         }
 
         public Add(fileName: string, flags?: string) {
-            return this._exec(this.strategy.Add(fileName, flags));
+            return this._exec(`hg add ${fileName} ${flags || ''}`);
         }
 
-        public Update(rev: string, flags?: string): PromiseLike<string> {
-            return this._exec(this.strategy.Update(rev, flags));
+        public Update(rev: string, flags?: string): Promise<string> {
+            return this._exec(`hg update ${flags || ''} ${rev}`);
         }
 
-        public Id(flags?: string): PromiseLike<string> {
-            return this._exec(this.strategy.Id(flags));
+        public Id(flags?: string): Promise<string> {
+            return this._exec(`hg id ${flags || ''}`);
+        }
+
+        private parseStatus(result: string): Array<Object> {
+            const lines: Array<string> = result.split('\n');
+            const returnValue = [];
+
+            _(lines)
+                .reject(line => !line)
+                .forEach(line => {
+                    const parts = line.split(' ');
+                    returnValue.push({
+                        changeType: parts[0],
+                        fileName: parts[1]
+                    });
+                });
+
+            return returnValue;
+        }
+
+        private parseLog(args: string, result: string): Array<Object> {
+            if (_.includes(args, '--template')) {
+                return [result];
+            }
+
+            const lines: Array<string> = result.split('\n\n');
+            const returnValue: Array<Object> = [];
+            _(lines)
+                .reject(line => !line)
+                .forEach(entry => {
+                    const entryObject: Object = {};
+
+                    // We expect our data to look like 
+                    // "key: value"
+                    // We will split according to newline,
+                    // and enter these key/value pairs into our entry object.
+                    // we have to handle some special cases
+                    // If we are dealing with a merge commit, we have two parent commits
+                    // and if we have a changeset, map it to hash for convience in our UI view
+                    _(entry.split('\n'))
+                        .forEach(line => {
+                            let parts: Array<string> = line.split(':');
+                            parts = _(parts)
+                                .map(part => part.trim())
+                                .value();
+
+
+                            if (parts[0] === 'parent'
+                                && entryObject.hasOwnProperty('parent')) {
+                                parts[0] = 'otherBranchParent';
+                            }
+
+                            entryObject[parts[0]] = parts[1];
+                            if (_.includes(parts[0], 'changeset')) {
+                                // special case...
+                                entryObject['hash'] = parts[2];
+                            }
+                        });
+                    returnValue.push(entryObject);
+                });
+
+            return returnValue;
+        }
+
+        public parseBranches(result: string): Array<string> {
+            return _(result.split('\n'))
+                .reject(line => !line)
+                .map(line => line.split(' ')[0])
+                .value();
         }
     }
 }

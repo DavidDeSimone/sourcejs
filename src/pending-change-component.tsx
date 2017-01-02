@@ -1,8 +1,8 @@
-import { Hg } from './hg';
-import { Source } from './repository';
+import { Repository } from './repository';
 import React = require('react');
 import ReactDOM = require('react-dom');
 import _ = require('lodash');
+import Promise = require('bluebird');
 
 interface State {
     status: Array<Object>,
@@ -38,7 +38,7 @@ enum Action {
 export module PendingChange {
     export class Component extends React.Component<Props, State> {
         private timerId;
-        private repo: Source.Repository<Hg>;
+        private repo: Repository.Hg;
         constructor(props) {
             super(props);
             this.repo = props.repo;
@@ -57,7 +57,9 @@ export module PendingChange {
         tick() {
             this.repo.Status().then(result => {
                 _(result)
-                    .forEach(entry => this.setFileVisibility(entry.fileName, Action.SELECT_IF_UNINITALIZED));
+                    .filter((entry: FileEntry) => entry.changeType !== '?')
+                    .forEach((entry: FileEntry) =>
+                        this.setFileVisibility(entry.fileName, Action.SELECT_IF_UNINITALIZED));
                 this.setState({
                     status: result
                 } as State);
@@ -102,10 +104,15 @@ export module PendingChange {
             });
         }
 
-        private addFile(fileName: string) {
+        private addFile(entry: FileEntry) {
             this.setState((prevState: State, props: Props) => {
-                prevState.pendingAddsRemoves.push(fileName);
-                this.repo.Add(fileName);
+                prevState.pendingAddsRemoves.push(entry.fileName);
+                if (entry.changeType === '!') {
+
+                } else if (entry.changeType === '?') {
+                    this.repo.Add(entry.fileName);
+                }
+
                 return {
                     pendingAddsRemoves: prevState.pendingAddsRemoves
                 } as State
@@ -115,19 +122,20 @@ export module PendingChange {
 
         handleFileClick(entry: FileEntry, event: Event) {
             this.setFileVisibility(entry.fileName, Action.TOGGLE);
-            this.addFile(entry.fileName);
+            this.addFile(entry);
         }
 
         handleSubmit(event: Event) {
             event.preventDefault();
             let args: string = '';
             _(this.state.status)
-                .reject(entry =>
+                .reject((entry: FileEntry) => {
                     // This is bad, it's UI state driving business logic. This should
                     // the other way around. 
-                    this.state.entryStyles[entry.fileName].opacity !== 1
-                )
-                .forEach(entry => {
+                    return (!this.state.entryStyles[entry.fileName])
+                        || this.state.entryStyles[entry.fileName].opacity !== 1;
+                })
+                .forEach((entry: FileEntry) => {
                     args += ` ${entry.fileName} `;
                 });
             this.repo.Commit(this.state.commitMsg, args)
@@ -137,7 +145,8 @@ export module PendingChange {
                     } as State);
                 })
                 .catch((error) => {
-                    alert(`There has been a problem while attempting to commit, ${error.stdout}`);
+                    console.log(error);
+                    alert(`There has been a problem while attempting to commit, ${error}`);
                 });
         }
 

@@ -1,8 +1,7 @@
 // Gitgraph will be included from a non-module require
 declare const GitGraph;
 declare const Promise;
-import { Hg } from './hg.js';
-import { Source } from './repository.js';
+import { Repository } from './repository.js';
 import _ = require('lodash');
 import React = require('react');
 import ReactDOM = require('react-dom');
@@ -62,7 +61,7 @@ export module Tree {
 
     export class Component extends React.Component<Props, State> {
         private graph: Object;
-        private repo: Source.Repository<Hg>;
+        private repo: Repository.Hg;
         private graphTemplate: Object;
         private timerId: number;
         private renderInitalized: boolean;
