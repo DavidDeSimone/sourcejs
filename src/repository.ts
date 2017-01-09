@@ -123,7 +123,9 @@ export module Repository {
         public parseBranches(result: string): Array<string> {
             return _(result.split('\n'))
                 .reject(line => !line)
-                .map(line => line.split(' ')[0])
+                .map(line => line.split(' '))
+                .map(entry => entry[0])
+                .map(branchName => branchName.trim())
                 .value();
         }
     }
