@@ -59,8 +59,14 @@ export module Tree {
         currentHead: string
     }
 
+    interface Graph {
+        applyCommits(event: MouseEvent, callback: Function);
+        canvas: any;
+        branch(props: Object);
+    }
+
     export class Component extends React.Component<Props, State> {
-        private graph: Object;
+        private graph: Graph;
         private repo: Repository.Hg;
         private graphTemplate: Object;
         private timerId: number;
@@ -173,7 +179,7 @@ export module Tree {
                             onClick: this.handleCommitMousedown.bind(this)
                         };
 
-                        if (this.state.currentHead.includes(commit.hash)) {
+                        if (this.state.currentHead.indexOf(commit.hash) > -1) {
                             template = currentHeadTemplate;
                         }
 

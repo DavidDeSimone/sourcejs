@@ -3,11 +3,9 @@ import { Diff } from './diff-component';
 import { PendingChange } from './pending-change-component';
 import { Tree } from './tree-component';
 import { BranchList } from './branch-list-component';
-import { ContextMenu, DefaultContextMenu } from './context-menu';
 import React = require('react');
 import ReactDOM = require('react-dom');
 import _ = require('lodash');
-import context = require('electron-context-menu');
 
 const repoPath = localStorage.getItem('setOpenRepo');
 console.log(`Opening new view for repo ${repoPath}`);

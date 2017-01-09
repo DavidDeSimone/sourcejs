@@ -78,7 +78,7 @@ export module PendingChange {
             });
         }
 
-        handleTextInput(event: Event) {
+        handleTextInput(event: any) {
             this.setState({
                 commitMsg: event.target.value
             } as State);
